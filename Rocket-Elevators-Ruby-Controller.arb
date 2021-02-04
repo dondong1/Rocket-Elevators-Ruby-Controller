@@ -91,6 +91,7 @@ class Column
     return bestElevatorInformations
     end
 end
+
 class Elevator 
     attr_accessor :id, :_status, :_amountOfFloors, :_currentFloor, :direction, :door, :floorRequestButton, :floorRequestButtonsList, :overweight
     def initialize ( _id, _status, _amountOfFloors, _currentFloor)
@@ -201,9 +202,11 @@ end
 
 
 #========================Scenario 1 =======================
-#column =  Column(1, 'online', 10, 2) 
-#print(column)
-#column.elevatorsList[0].currentFloor
+puts "give me an answer"
+column =  Column(1, online , 10, 2) 
+column.display(Column)
+column.elevatorsList[0].currentFloor
+column.display(elevatorsList[0].currentFloor)
 #print(column.elevatorsList[0].currentFloor)
 #column.elevatorsList[1].currentFloor =6
 #print(column.elevatorsList[1].currentFloor)
