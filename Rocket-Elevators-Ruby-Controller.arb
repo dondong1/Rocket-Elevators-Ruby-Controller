@@ -1,0 +1,212 @@
+$numberOfColumns = 0
+$amountOfFloors = 0 
+$amountOfElevators = 0
+
+class Column
+    attr_accessor :id, :status, :amountOfFloors, :amountOfElevators, :elevatorsList, :callButtonsList
+    def initialize ( _id, _status, _amountOfFloors, _amountOfElevators) 
+        @ID = _id   
+        @status = _status 
+        @amountOfFloors = _amountOfFloors
+        @amountOfElevators = _amountOfElevators
+        @elevatorsList = []
+        @callButtonsList = []
+
+        createElevatorsList
+        createCallButtonsList
+    end
+
+    def createCallButtons (_amountOfFloors)
+        buttonFloor = 1
+        for i in @amountOfFloors
+            if buttonFloor < @amountOfFloors 
+                callButton =  CallButton(i, 'OFF', buttonFloor, 'Up') 
+                @callButtonsList.append(callButton)
+                i +=1
+            end
+            if buttonFloor > 1 
+                callButton =  CallButton(callButton, 'OFF', buttonFloor, 'Down') 
+                @callButtonsList.append(callButton)
+                i +=1
+            end
+        end
+    end
+
+    def createElevators(_amountOfFloors, _amountOfElevators) 
+        for i in @amountOfElevators do
+            elevator =  Elevator(i, 'idle', _amountOfFloors, 1) 
+            @elevatorsList.append(elevator)
+            i+=1
+        end
+    end
+
+    def requestElevator(_floor, direction) 
+        elevator = findElevator(_floor, direction)
+        elevator.floorRequestList.append(_floor)
+        elevator.sortFloorList()
+        elevator.move()
+        elevator.operateDoors()
+        return elevator
+    end
+
+    def findElevator(requestedFloor, requestedDirection)
+        bestElevatorInformations = {
+            bestElevator: None,
+            bestScore: 5,
+            referenceGap: 100000000 }
+
+        for i in @elevatorsList 
+            if requestedFloor == elevator.currentFloor and elevator.status == 'stopped' and requestedDirection == elevator.direction 
+                bestElevatorInformations = checkIfElevatorIsBetter(1, elevator, bestElevatorInformations, requestedFloor)
+            
+            elsif requestedFloor > elevator.currentFloor and elevator.direction == 'Up' and requestedDirection == elevator.direction
+                bestElevatorInformations = checkIfElevatorIsBetter(2, elevator, bestElevatorInformations, requestedFloor)
+            
+            elsif requestedFloor < elevator.currentFloor and elevator.direction == 'Down' and requestedDirection == elevator.direction 
+                bestElevatorInformations = checkIfElevatorIsBetter(2, elevator, bestElevatorInformations, requestedFloor)
+            
+            elsif elevator.status == 'idle'
+                bestElevatorInformations = checkIfElevatorIsBetter(3, elevator, bestElevatorInformations, requestedFloor)
+               
+            else
+                bestElevatorInformations = checkIfElevatorIsBetter(4, elevator, bestElevatorInformations, requestedFloor)
+            end
+        end
+
+        return bestElevatorInformations.bestElevator
+    end
+
+    def checkIfElevatorIsBetter(scoreToCheck, elevator, bestElevatorInformations, floor) 
+        if scoreToCheck < bestElevatorInformations.bestScore   
+            bestElevatorInformations.bestScore = scoreToCheck
+            bestElevatorInformations.bestElevator = elevator
+            bestElevatorInformations.referenceGap = (Elevator.currentFloor - floor).abs
+        elsif bestElevatorInformations.bestScore == scoreToCheck  
+            gap = (Elevator.currentFloor - floor).abs
+        else bestElevatorInformations.referenceGap > gap  
+            bestElevatorInformations.bestScore = scoreToCheck
+            bestElevatorInformations.bestElevator = elevator
+            bestElevatorInformations.referenceGap = gap 
+        end
+    return bestElevatorInformations
+    end
+end
+class Elevator 
+    attr_accessor :id, :_status, :_amountOfFloors, :_currentFloor, :direction, :door, :floorRequestButton, :floorRequestButtonsList, :overweight
+    def initialize ( _id, _status, _amountOfFloors, _currentFloor)
+        @ID = _id
+        @status = _status
+        @amountOfFloors = _amountOfFloors
+        @currentFloor = _currentFloor
+        @direction = "none"
+        @door = Door.new(_id, _status::closed)
+        @floorRequestButtonsList = []
+        @floorRequestList = []
+        createFloorRequestButtons(_amountOfFloors)
+        @overweight = 0
+    end
+
+    def createFloorRequestButtons(_amountOfFloors) 
+        buttonFloor = 1
+        for i in @amountOfFloors
+            floorRequestButton =  FloorRequestButton(i, 'OFF', buttonFloor)
+            @floorRequestButtonsList.append(floorRequestButton)
+            buttonFloor+=1
+            i+=1
+        end   
+    end
+
+    def requestFloor(floor) 
+        @floorRequestList.append(floor)
+        @sortFloorList
+        @move
+        @operateDoors
+    end
+
+    def move()
+        while @floorRequestList.length() !=0
+            destination = @floorRequestList[0]
+            @status = 'moving'
+            if @currentFloor < destination
+                @direction = 'Up'
+                while @currentFloor < destination
+                    @currentFloor+=1
+                end
+            else @currentFloor > destination
+                @direction = 'Down'               
+                while @currentFloor < destination 
+                    @currentFloor-=1
+                end
+            end
+            @status = 'stopped'
+            @floorRequestList.shift()
+        end
+    end
+
+    def sortFloorList()
+        if  @direction == 'Up' 
+            @floorRequestList.sort()          
+        else
+            @floorRequestList.sort(reverse = True)
+        end
+    end
+
+    def operateDoors()
+        @doorStatus = 'opened'
+
+        if (!@overweight)
+            @door.status = 'closing'
+            if (!@door.obstruction) 
+                @door.status = 'closed'
+            else
+                operateDoors() 
+            end 
+        else
+            while @overweight
+                @overweight = False 
+            end
+        end
+    end
+end
+
+class CallButton 
+    attr_accessor :_id, :_status, :_floor, :_direction
+    def initialize( _id, _status, _floor, direction)
+        @ID = _id
+        @status = _status
+        @floor = _floor
+        @direction = direction
+    end
+
+end
+
+class FloorRequestButton
+    attr_accessor :_id, :_status, :_floor
+    def initialize ( _id, _status, _floor)
+        @ID = _id 
+        @status = _status 
+        @floor = _floor
+    end
+end 
+
+class Door 
+    attr_accessor :_id, :_status
+    def initialize(_id, _status) 
+        @ID = _id 
+        @status = _status  
+        @obstruction = False
+    end
+end
+          
+
+
+#========================Scenario 1 =======================
+#column =  Column(1, 'online', 10, 2) 
+#print(column)
+#column.elevatorsList[0].currentFloor
+#print(column.elevatorsList[0].currentFloor)
+#column.elevatorsList[1].currentFloor =6
+#print(column.elevatorsList[1].currentFloor)
+#elevator=column.requestElevator(3, 'Up')
+#print(elevator)
+
