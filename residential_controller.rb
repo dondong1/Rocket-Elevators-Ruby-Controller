@@ -1,12 +1,10 @@
+
 $numberOfColumns = 0
 $numberOfFloors = 0 
 $numberOfElevators = 0
-$waitingTime = 0         
+$waitingTime = 0        
 $maxWeight = 0           
 
-
-# ------------------------------------------- COLUMN CLASS ------------------------------------------------------------------------
-# ---------------------------------------------------------------------------------------------------------------------------------
 class Column
     #  ------------------ Constructor and its attributes ------------------
     attr_accessor :id, :status, :numberOfFloors, :numberOfElevators, :elevatorsList, :buttonsUpList, :buttonsDownList
@@ -31,18 +29,17 @@ class Column
         puts "----------------------------------"
     end
 
-
     def createElevatorsList
         for x in 1..@numberOfElevators do
             @elevatorsList.append(Elevator.new(x, @numberOfFloors, 1, ElevatorStatus::IDLE, SensorStatus::OFF, SensorStatus::OFF))
-
+            # puts "elevator#{@id} created"
         end
     end
 
     def createButtonsUpList
         for x in 1..(@numberOfFloors - 1) do
             @buttonsUpList.append(Button.new(x, ButtonStatus::OFF, x))
-
+            # puts "button up #{@buttonsUpList[x - 1].id} created"
         end
     end
 
@@ -50,16 +47,17 @@ class Column
     def createButtonsDownList
         for x in 2..@numberOfFloors do
             @buttonsDownList.append(Button.new(x, ButtonStatus::OFF, x))
-
+            # puts "button down #{@buttonsDownList[x - 2].id} created"
         end
     end
+
 
     def findElevator(currentFloor, direction)
         activeElevatorList = []
         idleElevatorList = []
         sameDirectionElevatorList = []
         for x in @elevatorsList
-            if x.status != ElevatorStatus::IDLE #verify if elevator is active and if the request is on the elevator way
+            if x.status != ElevatorStatus::IDLE 
                 if x.status == ElevatorStatus::UP and x.floor <= currentFloor or x.status == ElevatorStatus::DOWN and x.floor >= currentFloor
                     activeElevatorList.append(x)
                 end
@@ -68,7 +66,7 @@ class Column
             end
         end
 
-        if activeElevatorList.length > 0 #Create new list for elevators with same direction that the request
+        if activeElevatorList.length > 0 
             sameDirectionElevatorList = activeElevatorList.select {|elevator| elevator.status == direction}
         end
         
@@ -81,10 +79,10 @@ class Column
     return bestElevator
     end
 
-    # LOGIC TO FIND THE NEAREST ELEVATOR
+
     def findNearestElevator(currentFloor, selectedList)
         bestElevator = selectedList[0]
-        bestDistance = (selectedList[0].floor - currentFloor).abs #abs() returns the absolute value of a number (always positive).
+        bestDistance = (selectedList[0].floor - currentFloor).abs 
     
         for elevator in selectedList
             if (elevator.floor - currentFloor).abs < bestDistance
@@ -96,8 +94,6 @@ class Column
         puts "   >> >>> ELEVATOR #{bestElevator.id} WAS CALLED <<< <<"
     return bestElevator
     end
-
-
 
     def requestElevator(requestedFloor, direction)
         if direction == ButtonDirection::UP
@@ -120,9 +116,8 @@ class Column
 
 end
 
-
 class Elevator
-
+    #  ------------------ Constructor and its attributes ------------------
     attr_accessor :id, :numberOfFloors, :floor, :status, :weightSensor, :obstructionSensor, :elevatorDoor, :elevatorDisplay, :floorDoorsList, :floorDisplaysList, :floorButtonsList, :floorList
     def initialize(id, numberOfFloors, floor, elevatorStatus, weightSensorStatus, obstructionSensorStatus)
         @id = id
@@ -150,7 +145,7 @@ class Elevator
         end
     end
 
-
+  
     def createDisplaysList
         for x in 1..@numberOfFloors do
             @floorDisplaysList.append(Display.new(x, DisplayStatus::ON, x))
@@ -158,12 +153,14 @@ class Elevator
         end
     end
 
+
     def createFloorButtonsList
         for x in 1..@numberOfFloors do
             @floorButtonsList.append(Button.new(x, ButtonStatus::ON, x))
 
         end
     end
+
 
     def moveElevator(requestedFloor, requestedColumn)
         while @floorList.length() != 0
@@ -220,7 +217,6 @@ class Elevator
         end
     end
 
-
     def moveDown(requestedColumn)
         tempArray = @floorList.dup
         for x in @floor.downto(tempArray[tempArray.length - 1] + 1)
@@ -251,6 +247,7 @@ class Elevator
         end
     end
 
+
     def updateDisplays(elevatorFloor)
         for display in @floorDisplaysList
             display.floor = elevatorFloor
@@ -277,8 +274,9 @@ class Elevator
         end
     end
 
+
     def checkWeight(maxWeight)
-        weight = rand(1..600)
+        weight = rand(1..600) 
         while weight > maxWeight
             @weightSensor = SensorStatus::ON
             puts "       ! Elevator capacity reached, waiting until the weight is lower before continue..."
@@ -289,11 +287,10 @@ class Elevator
         puts "       Elevator capacity is OK"
     end
 
-
+ 
     def checkObstruction
         probabilityNotBlocked = 70
         number = rand(1..100) 
-
         while number > probabilityNotBlocked
             @obstructionSensor = SensorStatus::ON
             puts "       ! Elevator door is blocked by something, waiting until door is free before continue..."
@@ -310,7 +307,6 @@ class Elevator
         puts "Elevator#{@id} - floor #{floor} added to floorList"
     end
 
-
     def deleteFloorFromList(stopFloor)
         index = @floorList.find_index(stopFloor)
         if index > -1
@@ -319,6 +315,7 @@ class Elevator
     end
 
 
+  
     def requestFloor(requestedFloor, requestedColumn)
         puts ""          
         puts ">> Someone inside the elevator#{@id} wants to go to floor <#{requestedFloor}> <<"
@@ -329,6 +326,7 @@ class Elevator
     end
 
 end
+
 
 class Door
     attr_accessor :id, :status, :floor
@@ -349,6 +347,7 @@ class Button
     end
 end
 
+
 class Display
     attr_accessor :id, :status, :floor
     def initialize(id, displayStatus, floor)
@@ -358,52 +357,56 @@ class Display
     end
 end
 
+
+# --COLUMN STATUS -- 
 module ColumnStatus
     ACTIVE = "active"
     INACTIVE = 'inactive'
 end
 
-
+# -- ELEVATOR STATUS --
 module ElevatorStatus
     IDLE = 'idle'
     UP = 'up'
     DOWN = 'down'
 end
 
-
+# -- BUTTON DIRECTION --
 module ButtonDirection
     UP = 'up'
     DOWN = 'down'
 end
 
+# -- BUTTON STATUS --
 module ButtonStatus
     ON = 'on'
     OFF = 'off'
 end
 
+# -- SENSOR STATUS --
 module SensorStatus
     ON = 'on'
     OFF = 'off'
 end
 
+# -- DOORS STATUS --
 module DoorStatus
     OPENED = 'opened'
     CLOSED = 'closed'
 end
 
+# -- DISPLAY STATUS --
 module DisplayStatus
     ON = 'on'
     OFF = 'off'
 end
 
 
-# ------------------------------------------- TESTING PROGRAM ------------------------------------------------------------------------
-# ---------------------------------------------------------------------------------------------------------------------------------
-$waitingTime = 1 
-$maxWeight = 500 
+$waitingTime = 1 #How many time the door remains opened in SECONDS - I'm using 1 second so the test will run faster
+$maxWeight = 500 #Maximum weight an elevator can carry in KG
 
 # ******* CREATE SCENARIO 1 ******* 
-def self.scenario1()
+def scenario1()
     puts ""
     puts "****************************** SCENARIO 1: ******************************"
     columnScenario1 = Column.new(1, ColumnStatus::ACTIVE, 10, 2) 
@@ -413,13 +416,13 @@ def self.scenario1()
     
     puts ""
     puts "Person 1: (elevator 1 is expected)"
-    columnScenario1.requestElevator(3, ButtonDirection::UP) 
+    columnScenario1.requestElevator(3, ButtonDirection::UP)
     columnScenario1.elevatorsList[0].requestFloor(7, columnScenario1) 
     puts "=================================="
 end
 
 # ******* CREATE SCENARIO 2 ******* 
-def self.scenario2()
+def scenario2()
     puts ""
     puts "****************************** SCENARIO 2: ******************************"
     columnScenario2 = Column.new(1, ColumnStatus::ACTIVE, 10, 2) 
@@ -445,7 +448,7 @@ def self.scenario2()
 end
 
 # ******* CREATE SCENARIO 3 ******* 
-def self.scenario3()
+def scenario3()
     puts ""
     puts "****************************** SCENARIO 3: ******************************"
     columnScenario3 = Column.new(1, ColumnStatus::ACTIVE, 10, 2) 
@@ -474,6 +477,6 @@ end
 
 
 ''' -------- CALL SCENARIOS -------- '''
-#ResidentialController::scenario1
-#ResidentialController::scenario2
-#ResidentialController::scenario3
+#scenario1()
+#scenario2()
+#scenario3()
